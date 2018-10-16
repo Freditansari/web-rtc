@@ -1,24 +1,72 @@
 <html>
     <head>
-        <title>O'reilly intro to webRTC</title>
+        <title>webcam</title>
+        <link rel="stylesheet" type="text/css" href="styles.css">
     </head>
     <body>
-        Hello webRTC;
+        <div>
+            Video: <select id="camera"></select>
+        </div>
+
         <video autoplay></video>
     </body>
     <script>
-        navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+         var videoArea = document.querySelector("video");
+         var videoSelect = document.querySelector('#camera');
 
-        var constraints = {audio: false, video: true}
-        var videoArea = document.querySelector("video");
-        navigator.getUserMedia(constraints, onSuccess, onError)
+        // deprecated MediaStreamTrack.getSources(getCameras);
+        navigator.mediaDevices.enumerateDevices()
+            .then(getCameras)
+            .catch((err) => {
+                console.log(err.name + ": " + err.message);
+            });
 
+         videoSelect.onchange=startStream;
 
+     
+
+        function startStream(){
+            
+
+            navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+            
+            var videoSource = videoSelect.value;
+            var constraints = {
+                        audio: false, 
+                        video: {
+                            mandatory:{
+                                minWidth:240,
+                                maxWidth:240,
+                                minHeight:240,
+                                maxHeight:240
+                            },
+                            optional: [{
+                                sourceId:videoSource
+                            }]
+                        }
+                    }
+
+            
+                navigator.getUserMedia(constraints, onSuccess, onError);
+
+        }
         function onSuccess(stream){
             console.log("success");
             videoArea.src = window.URL.createObjectURL(stream);
+            videoArea.className="grayscale_filter";
             videoArea.play();
 
+        }
+
+        function getCameras(devices) {
+            devices.forEach(function (device) {
+                var option = document.createElement('option');
+                option.value = device.id;
+                if (device.kind === 'videoinput') {
+                    option.text = device.label || 'camera ' + (videoSelect.length + 1);
+                    videoSelect.appendChild(option);
+                }
+            });
         }
 
         function onError(error){
